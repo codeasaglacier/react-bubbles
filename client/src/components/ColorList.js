@@ -1,15 +1,31 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { useRouteMatch } from 'react-router-dom'
+
 
 const initialColor = {
   color: "",
   code: { hex: "" }
 };
 
-const ColorList = ({ colors, updateColors }) => {
+
+const ColorList = ({ colors, updateColors, props }) => {
   console.log(colors);
   const [editing, setEditing] = useState(false);
   const [colorToEdit, setColorToEdit] = useState(initialColor);
+  const match = useRouteMatch()
+  
+  useEffect( () => {
+    const colorToEdit = colors.find( color => {
+      return color.id === Number(match.params.id)
+    })
+  
+    console.log( 'colorToEdit', colorToEdit )
+  
+    if ( colorToEdit ) {
+      setColorToEdit( colorToEdit ) 
+    }
+  }, [ colorToEdit, match.params.id ] )
 
   const editColor = color => {
     setEditing(true);
@@ -18,13 +34,27 @@ const ColorList = ({ colors, updateColors }) => {
 
   const saveEdit = e => {
     e.preventDefault();
-    // Make a put request to save your updated color
-    // think about where will you get the id from...
-    // where is is saved right now?
+    axios
+      .put( `http://localhost:5000/api/colors/${match.params.id}`, colorToEdit )
+      .then( res => {
+        console.log( '.put Res.data:', res.data )
+        window.location.href = `/protected`
+      })
+      .catch( err => {
+        console.log( 'Error:', err )
+      })
   };
 
   const deleteColor = color => {
-    // make a delete request to delete this color
+    axios
+      .delete( `http://localhost:5000/api/colors/${match.params.id}` )
+      .then( res => {
+        console.log( '.delete Res.data:', res.data )
+        window.location.href = `/protected`
+      })
+      .catch( err => {
+        console.log( 'Error:', err )
+      })
   };
 
   return (
