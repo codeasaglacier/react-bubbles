@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
+import React, { useState } from "react";
+import { axiosAuth } from './axiosAuth'
 import { useRouteMatch } from 'react-router-dom'
 
 
@@ -14,18 +14,7 @@ const ColorList = ({ colors, updateColors, props }) => {
   const [editing, setEditing] = useState(false);
   const [colorToEdit, setColorToEdit] = useState(initialColor);
   const match = useRouteMatch()
-  
-  useEffect( () => {
-    const colorToEdit = colors.find( color => {
-      return color.id === Number(match.params.id)
-    })
-  
-    console.log( 'colorToEdit', colorToEdit )
-  
-    if ( colorToEdit ) {
-      setColorToEdit( colorToEdit ) 
-    }
-  }, [ colorToEdit, match.params.id ] )
+
 
   const editColor = color => {
     setEditing(true);
@@ -34,11 +23,13 @@ const ColorList = ({ colors, updateColors, props }) => {
 
   const saveEdit = e => {
     e.preventDefault();
-    axios
-      .put( `http://localhost:5000/api/colors/${match.params.id}`, colorToEdit )
+    const color = colors.find( item => colorToEdit.code.hex === item.code.hex )
+    axiosAuth()
+      .put( `/colors/${color}`, colorToEdit )
       .then( res => {
         console.log( '.put Res.data:', res.data )
-        window.location.href = `/protected`
+        setEditing(false)
+        updateColors( [ ...colors, res.data ] )
       })
       .catch( err => {
         console.log( 'Error:', err )
@@ -46,15 +37,19 @@ const ColorList = ({ colors, updateColors, props }) => {
   };
 
   const deleteColor = color => {
-    axios
-      .delete( `http://localhost:5000/api/colors/${match.params.id}` )
+    axiosAuth()
+      .delete( `/colors/${color.id}` )
       .then( res => {
-        console.log( '.delete Res.data:', res.data )
-        window.location.href = `/protected`
+        console.log( '.delete Res:', res )
       })
       .catch( err => {
         console.log( 'Error:', err )
       })
+      updateColors(
+        colors.filter( item => {
+          return item.id !== color.id
+        })
+      )
   };
 
   return (
